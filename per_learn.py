@@ -14,31 +14,28 @@ def get_file_tokens(file):
     file_open = open(file, "r", encoding="latin1")
     file_content = file_open.read()
 
-    file_content_tokenized = set(file_content.split())
+    file_content_tokenized = file_content.split()
 
-    return file_content_tokenized
-
-def get_word_count_tokens(tokens):
     word_count_dict = {}
-    
-    for token in tokens:
+    for token in file_content_tokenized:
         if token in word_count_dict:
             word_count_dict[token] += 1
         else:
             word_count_dict[token] = 1
+
     return word_count_dict
     
 
-def calculate_alpha(feature_list, tokens, bias, file_word_count):
+def calculate_alpha(feature_list, bias, file_word_count):
     val = 0
-    for token in tokens:
+    for token in file_word_count:
         val += (feature_list[token] * file_word_count[token])
     val += bias
     return val
 
-def update_weight_for_tokens(feature_list, tokens, y):
-    for token in tokens:
-        feature_list[token] = feature_list[token] + y
+def update_weight_for_tokens(feature_list, file_word_count, y):
+    for token in file_word_count:
+        feature_list[token] = feature_list[token] + ( y * file_word_count[token] )
     return feature_list
 
 def write_to_file(bias, feature_list):
@@ -53,17 +50,13 @@ def main_func():
 
     max_iterations = 20
     token_list = set()
-
-    file_in_memory = {}
     
     file_word_count = {}
     for root, dirs, files in os.walk(directory[1]):
         for file in files:
             if file.endswith(".txt"):
                 token_list = get_features(token_list, os.path.join(root, file))
-                file_in_memory[os.path.join(root, file)] = get_file_tokens(os.path.join(root, file))
-                file_word_count[os.path.join(root, file)] = get_word_count_tokens(file_in_memory[os.path.join(root, file)])
-                                
+                file_word_count[os.path.join(root, file)] = get_file_tokens(os.path.join(root, file))                                
 
     feature_list = {}
     for item in token_list:
@@ -73,7 +66,6 @@ def main_func():
     y_ham = -1
     bias = 0
 
-    num_iterations = 0
     num_features = len(feature_list)
 
     for i in range(max_iterations):
@@ -82,22 +74,17 @@ def main_func():
             for file in files:
                 y = 0
                 if file.endswith(".txt"):
-                    if "spam" in file:
+                    if ".spam.txt" in file:
                         y = y_spam
-                    else:
+                    elif ".ham.txt":
                         y = y_ham
 
-                    tokens = file_in_memory[os.path.join(root, file)]
-                    alpha = calculate_alpha(feature_list, tokens, bias, file_word_count[os.path.join(root, file)])
-                    if (alpha * y) <= 0:
-                        feature_list = update_weight_for_tokens(feature_list, tokens, y)
-                        bias += y
-                    # print(alpha, bias)
-                    # for token in tokens:
-                    #     print(token, feature_list[token]),
-                    # print()
-                # input()
-    # pprint(feature_list)
+                    if y != 0:
+                        alpha = calculate_alpha(feature_list, bias, file_word_count[os.path.join(root, file)])
+                        if (alpha * y) <= 0:
+                            feature_list = update_weight_for_tokens(feature_list, file_word_count[os.path.join(root, file)], y)
+                            bias += y
+
     write_to_file(bias, feature_list)
     print(bias)
 
