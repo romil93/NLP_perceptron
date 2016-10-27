@@ -1,7 +1,7 @@
 import os, sys
 
 def reading():
-    s = open('per_model.txt', 'r').read()
+    s = open('per_model.txt', 'r', encoding="latin1").read()
     return eval(s)
 
 def get_file_tokens(file):

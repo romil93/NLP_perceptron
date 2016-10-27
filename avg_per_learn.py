@@ -16,12 +16,19 @@ def get_file_tokens(file):
 
     file_content_tokenized = file_content.split()
 
-    return file_content_tokenized
+    word_count_dict = {}
+    for token in file_content_tokenized:
+        if token in word_count_dict:
+            word_count_dict[token] += 1
+        else:
+            word_count_dict[token] = 1
 
-def calculate_alpha(feature_list, tokens, bias):
+    return set(file_content_tokenized), word_count_dict
+
+def calculate_alpha(feature_list, tokens, bias, file_word_count):
     val = 0
     for token in tokens:
-        val += feature_list[token]
+        val += (feature_list[token] * file_word_count[token])
     val += bias
     return val
 
@@ -48,12 +55,13 @@ def main_func():
     max_iterations = 30
     token_list = set()
     file_in_memory = {}
-
+    
+    file_word_count = {}
     for root, dirs, files in os.walk(directory[1]):
         for file in files:
             if file.endswith(".txt"):
                 token_list = get_features(token_list, os.path.join(root, file))
-                file_in_memory[os.path.join(root, file)] = get_file_tokens(os.path.join(root, file))
+                file_in_memory[os.path.join(root, file)], file_word_count[os.path.join(root, file)] = get_file_tokens(os.path.join(root, file))
 
     feature_list = {}
     avg_feature_list = {}
@@ -85,7 +93,7 @@ def main_func():
                         y = y_ham
 
                     tokens = file_in_memory[os.path.join(root, file)]
-                    alpha = calculate_alpha(feature_list, tokens, bias)
+                    alpha = calculate_alpha(feature_list, tokens, bias,file_word_count[os.path.join(root, file)])
                     if (alpha * y) <= 0:
                         feature_list = update_weight_for_tokens(feature_list, tokens, y)
                         avg_feature_list = update_weight_for_avg_tokens(avg_feature_list, tokens, y, c)
