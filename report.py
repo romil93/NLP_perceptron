@@ -1,6 +1,9 @@
 import os, sys
 
-file_open = open("peroutput.txt", "r", encoding="latin1")
+directory = sys.argv
+
+
+file_open = open(directory[1], "r", encoding="latin1")
 file_content = file_open.read()
 
 file_content_tokenized = file_content.split("\n")
